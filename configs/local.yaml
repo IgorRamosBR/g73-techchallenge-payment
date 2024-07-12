@@ -6,3 +6,7 @@ paymentBroker:
 paymentRepository:
   table: Payment
   endpoint: http://localhost:8000/
+
+orderEvents:
+  topic: order_events
+  paymentDestination: orders.payment

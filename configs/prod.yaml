@@ -4,5 +4,9 @@ paymentBroker:
   sponsorId: "12345"
 
 paymentRepository:
-  table: payment
+  table: Payment
   endpoint:
+
+orderEvents:
+  topic: order_events
+  paymentDestination: orders.payment

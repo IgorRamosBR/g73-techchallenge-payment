@@ -22,8 +22,9 @@ type AppConfig struct {
 	PaymentTable         string
 	PaymentTableEndpoint string
 
-	OrderApiUrl      string
-	ProductionApiUrl string
+	OrderEventsBrokerUrl          string
+	OrderEventsTopic              string
+	OrderEventsPaymentDestination string
 
 	DefaultTimeout int
 }
@@ -90,10 +91,9 @@ func (c *Config) extractConfigVars() (AppConfig, error) {
 	appConfig.PaymentTable = c.viper.GetString("paymentRepository.table")
 	appConfig.PaymentTableEndpoint = c.viper.GetString("paymentRepository.endpoint")
 
-	appConfig.OrderApiUrl = c.viper.GetString("ORDER_API_URL")
-	appConfig.ProductionApiUrl = c.viper.GetString("PRODUCTION_API_URL")
-
-	appConfig.DefaultTimeout = c.viper.GetInt("DEFAULT_TIMEOUT")
+	appConfig.OrderEventsBrokerUrl = c.viper.GetString("ORDER_EVENTS_BROKER_URL")
+	appConfig.OrderEventsTopic = c.viper.GetString("orderEvents.topic")
+	appConfig.OrderEventsPaymentDestination = c.viper.GetString("orderEvents.paymentDestination")
 
 	return appConfig, nil
 }
