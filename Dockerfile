@@ -1,12 +1,12 @@
 
-FROM golang:1.20-alpine as builder
+FROM golang:1.20-alpine AS builder
 
 WORKDIR /app
 
 COPY . ./
 
 # Build the binary.
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/main ./cmd/g37-lanches/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/main ./cmd/main.go
 
 # Use the official Debian slim image for a lean production container.
 # https://hub.docker.com/_/debian
@@ -19,7 +19,6 @@ RUN set -x && apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -
 # Copy the binary to the production image from the builder stage.
 COPY --from=builder /app/bin/main /app/main
 COPY --from=builder /app/configs /configs
-COPY --from=builder /app/migrations /migrations
 
 EXPOSE 8080
 
