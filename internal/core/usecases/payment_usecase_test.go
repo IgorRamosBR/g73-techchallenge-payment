@@ -126,7 +126,7 @@ func TestPaymentUseCase_CreatePaymentOrder(t *testing.T) {
 		config := PaymentUseCaseConfig{
 			PaymentBroker:     paymentBroker,
 			PaymentRepository: paymentRepository,
-			OrderClient:       nil,
+			OrderNotify:       nil,
 		}
 		paymentUseCase := NewPaymentUseCase(config)
 
@@ -140,7 +140,7 @@ func TestPaymentUseCase_CreatePaymentOrder(t *testing.T) {
 func TestPaymentUseCase_NotifyPayment(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	paymentRepository := mock_gateways.NewMockPaymentRepositoryGateway(ctrl)
-	orderClient := mock_gateways.NewMockOrderClient(ctrl)
+	orderNotify := mock_gateways.NewMockOrderNotify(ctrl)
 
 	type args struct {
 		orderId   int
@@ -168,13 +168,13 @@ func TestPaymentUseCase_NotifyPayment(t *testing.T) {
 		paymentRepositoryCall
 	}{
 		{
-			name: "should fail to notify payment when payment repository returns error",
+			name: "should notify payment when payment repository returns error",
 			args: args{
 				orderId:   123,
 				paymentId: 111,
 			},
 			want: want{
-				err: errors.New("internal server error"),
+				err: nil,
 			},
 			paymentRepositoryCall: paymentRepositoryCall{
 				orderId:   123,
@@ -182,9 +182,14 @@ func TestPaymentUseCase_NotifyPayment(t *testing.T) {
 				times:     1,
 				err:       errors.New("internal server error"),
 			},
+			orderClientCall: orderClientCall{
+				orderId: 123,
+				times:   1,
+				err:     nil,
+			},
 		},
 		{
-			name: "should fail to notify payment when order client returns error",
+			name: "should fail to notify payment when order notify returns error",
 			args: args{
 				orderId:   123,
 				paymentId: 111,
@@ -233,18 +238,128 @@ func TestPaymentUseCase_NotifyPayment(t *testing.T) {
 			Times(tt.paymentRepositoryCall.times).
 			Return(tt.paymentRepositoryCall.err)
 
-		orderClient.EXPECT().
+		orderNotify.EXPECT().
 			NotifyPaymentOrder(gomock.Eq(tt.orderClientCall.orderId), gomock.Eq(entities.PaymentStatusPaid)).
 			Times(tt.orderClientCall.times).
 			Return(tt.orderClientCall.err)
 
 		config := PaymentUseCaseConfig{
 			PaymentRepository: paymentRepository,
-			OrderClient:       orderClient,
+			OrderNotify:       orderNotify,
 		}
 		paymentUseCase := NewPaymentUseCase(config)
 
 		err := paymentUseCase.NotifyPayment(tt.args.orderId, tt.args.paymentId)
+
+		assert.Equal(t, tt.want.err, err)
+	}
+}
+
+func TestPaymentUseCase_ExpirePayment(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	paymentRepository := mock_gateways.NewMockPaymentRepositoryGateway(ctrl)
+	orderNotify := mock_gateways.NewMockOrderNotify(ctrl)
+
+	type args struct {
+		orderId int
+	}
+	type want struct {
+		err error
+	}
+	type orderPublisherCall struct {
+		orderId int
+		times   int
+		err     error
+	}
+	type paymentRepositoryCall struct {
+		orderId int
+		times   int
+		err     error
+	}
+	tests := []struct {
+		name string
+		args
+		want
+		orderPublisherCall
+		paymentRepositoryCall
+	}{
+		{
+			name: "should expire payment when payment repository returns error",
+			args: args{
+				orderId: 123,
+			},
+			want: want{
+				err: nil,
+			},
+			paymentRepositoryCall: paymentRepositoryCall{
+				orderId: 123,
+				times:   1,
+				err:     errors.New("internal server error"),
+			},
+			orderPublisherCall: orderPublisherCall{
+				orderId: 123,
+				times:   1,
+				err:     nil,
+			},
+		},
+		{
+			name: "should fail to expire payment when order notify returns error",
+			args: args{
+				orderId: 123,
+			},
+			want: want{
+				err: errors.New("internal server error"),
+			},
+			paymentRepositoryCall: paymentRepositoryCall{
+				orderId: 123,
+				times:   1,
+				err:     nil,
+			},
+			orderPublisherCall: orderPublisherCall{
+				orderId: 123,
+				times:   1,
+				err:     errors.New("internal server error"),
+			},
+		},
+		{
+			name: "should expire payment successfully",
+			args: args{
+				orderId: 123,
+			},
+			want: want{
+				err: nil,
+			},
+			paymentRepositoryCall: paymentRepositoryCall{
+				orderId: 123,
+				times:   1,
+				err:     nil,
+			},
+			orderPublisherCall: orderPublisherCall{
+				orderId: 123,
+				times:   1,
+				err:     nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		paymentRepository.EXPECT().
+			UpdatePaymentOrderStatus(gomock.Eq(tt.paymentRepositoryCall.orderId), gomock.Eq(0), gomock.Eq(entities.PaymentStatusExpired)).
+			Times(tt.paymentRepositoryCall.times).
+			Return(tt.paymentRepositoryCall.err)
+
+		orderNotify.EXPECT().
+			NotifyPaymentOrder(gomock.Eq(tt.orderPublisherCall.orderId), gomock.Eq(entities.PaymentStatusExpired)).
+			Times(tt.orderPublisherCall.times).
+			Return(tt.orderPublisherCall.err)
+
+		config := PaymentUseCaseConfig{
+			PaymentRepository: paymentRepository,
+			OrderNotify:       orderNotify,
+		}
+		paymentUseCase := NewPaymentUseCase(config)
+
+		err := paymentUseCase.ExpirePayment(tt.args.orderId)
 
 		assert.Equal(t, tt.want.err, err)
 	}

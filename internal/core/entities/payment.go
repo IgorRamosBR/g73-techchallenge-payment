@@ -5,6 +5,7 @@ type PaymentStatus string
 var (
 	PaymentStatusPending PaymentStatus = "PENDING"
 	PaymentStatusPaid    PaymentStatus = "PAID"
+	PaymentStatusExpired PaymentStatus = "EXPIRED"
 )
 
 type PaymentOrder struct {

@@ -5,7 +5,6 @@
 //
 //	mockgen -source=payment_usecase.go -destination=mocks/payment_usecase.go
 //
-
 // Package mock_usecases is a generated GoMock package.
 package mock_usecases
 
@@ -52,6 +51,20 @@ func (m *MockPaymentUseCase) CreatePaymentOrder(paymentOrder dto.PaymentOrderDTO
 func (mr *MockPaymentUseCaseMockRecorder) CreatePaymentOrder(paymentOrder any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePaymentOrder", reflect.TypeOf((*MockPaymentUseCase)(nil).CreatePaymentOrder), paymentOrder)
+}
+
+// ExpirePayment mocks base method.
+func (m *MockPaymentUseCase) ExpirePayment(orderId int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExpirePayment", orderId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ExpirePayment indicates an expected call of ExpirePayment.
+func (mr *MockPaymentUseCaseMockRecorder) ExpirePayment(orderId any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExpirePayment", reflect.TypeOf((*MockPaymentUseCase)(nil).ExpirePayment), orderId)
 }
 
 // NotifyPayment mocks base method.
