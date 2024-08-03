@@ -12,25 +12,26 @@ import (
 type PaymentUseCase interface {
 	CreatePaymentOrder(paymentOrder dto.PaymentOrderDTO) (string, error)
 	NotifyPayment(orderId, paymentId int) error
+	ExpirePayment(orderId int) error
 }
 
 type paymentUseCase struct {
 	paymentBroker     drivers.PaymentBroker
 	paymentRepository gateways.PaymentRepositoryGateway
-	orderClient       gateways.OrderClient
+	orderNotify       gateways.OrderNotify
 }
 
 type PaymentUseCaseConfig struct {
 	PaymentBroker     drivers.PaymentBroker
 	PaymentRepository gateways.PaymentRepositoryGateway
-	OrderClient       gateways.OrderClient
+	OrderNotify       gateways.OrderNotify
 }
 
 func NewPaymentUseCase(config PaymentUseCaseConfig) paymentUseCase {
 	return paymentUseCase{
 		paymentBroker:     config.PaymentBroker,
 		paymentRepository: config.PaymentRepository,
-		orderClient:       config.OrderClient,
+		orderNotify:       config.OrderNotify,
 	}
 }
 
@@ -53,11 +54,25 @@ func (u paymentUseCase) CreatePaymentOrder(paymentOrder dto.PaymentOrderDTO) (st
 func (u paymentUseCase) NotifyPayment(orderId, paymentId int) error {
 	err := u.paymentRepository.UpdatePaymentOrderStatus(orderId, paymentId, entities.PaymentStatusPaid)
 	if err != nil {
-		log.Errorf("failed to payment payment status for the order [%d], error: %v", orderId, err)
+		log.Errorf("failed to update payment status for the order [%d], error: %v", orderId, err)
+	}
+
+	err = u.orderNotify.NotifyPaymentOrder(orderId, entities.PaymentStatusPaid)
+	if err != nil {
+		log.Errorf("failed to notify payment order for the order [%d], error: %v", orderId, err)
 		return err
 	}
 
-	err = u.orderClient.NotifyPaymentOrder(orderId, entities.PaymentStatusPaid)
+	return nil
+}
+
+func (u paymentUseCase) ExpirePayment(orderId int) error {
+	err := u.paymentRepository.UpdatePaymentOrderStatus(orderId, 0, entities.PaymentStatusExpired)
+	if err != nil {
+		log.Errorf("failed to update payment status for the order [%d], error: %v", orderId, err)
+	}
+
+	err = u.orderNotify.NotifyPaymentOrder(orderId, entities.PaymentStatusExpired)
 	if err != nil {
 		log.Errorf("failed to notify payment order for the order [%d], error: %v", orderId, err)
 		return err

@@ -231,12 +231,103 @@ func TestPaymentController_NotifyPaymentHandler(t *testing.T) {
 	}
 }
 
+func TestPaymentController_ExpirePaymentHandler(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	paymentUseCase := mock_usecases.NewMockPaymentUseCase(ctrl)
+	paymentController := NewPaymentController(paymentUseCase)
+
+	type args struct {
+		id string
+	}
+	type want struct {
+		statusCode int
+		respBody   string
+	}
+	type paymentUseCaseCall struct {
+		orderId int
+		times   int
+		err     error
+	}
+	tests := []struct {
+		name string
+		args
+		want
+		paymentUseCaseCall
+	}{
+		{
+			name: "should return bad request when orderId is empty",
+			args: args{
+				id: "",
+			},
+			want: want{
+				statusCode: 400,
+				respBody:   `{"message":"[id] path parameter is required","error":"id is missing"}`,
+			},
+		},
+		{
+			name: "should return bad request when orderId is not a number",
+			args: args{
+				id: "abc",
+			},
+			want: want{
+				statusCode: 400,
+				respBody:   `{"message":"[id] path parameter is invalid","error":"strconv.Atoi: parsing \"abc\": invalid syntax"}`,
+			},
+		},
+		{
+			name: "should return internal server error when payment use case fails to expire payment",
+			args: args{
+				id: "123",
+			},
+			want: want{
+				statusCode: 500,
+				respBody:   `{"message":"failed to expire payment","error":"internal server error"}`,
+			},
+			paymentUseCaseCall: paymentUseCaseCall{
+				orderId: 123,
+				times:   1,
+				err:     errors.New("internal server error"),
+			},
+		},
+		{
+			name: "should return ok when expire payment successfully",
+			args: args{
+				id: "123",
+			},
+			want: want{
+				statusCode: 200,
+			},
+			paymentUseCaseCall: paymentUseCaseCall{
+				orderId: 123,
+				times:   1,
+				err:     nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		paymentUseCase.EXPECT().
+			ExpirePayment(gomock.Eq(tt.paymentUseCaseCall.orderId)).
+			Times(tt.paymentUseCaseCall.times).
+			Return(tt.paymentUseCaseCall.err)
+
+		router := createRouter(paymentController)
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("POST", fmt.Sprintf("/v1/payment/%s/expire", tt.args.id), nil)
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, tt.want.statusCode, w.Code)
+		assert.Equal(t, tt.want.respBody, w.Body.String())
+	}
+}
+
 func createRouter(paymenteControler PaymentController) *gin.Engine {
 
 	router := gin.Default()
 	v1 := router.Group("/v1")
 	{
 		v1.POST("/payment/:id/notify", paymenteControler.NotifyPaymentHandler)
+		v1.POST("/payment/:id/expire", paymenteControler.ExpirePaymentHandler)
 		v1.POST("/paymentOrder", paymenteControler.CreatePaymentOrderHandler)
 	}
 	return router

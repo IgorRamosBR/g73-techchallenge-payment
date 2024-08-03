@@ -1,0 +1,91 @@
+{
+    "rabbit_version": "3.13.4",
+    "rabbitmq_version": "3.13.4",
+    "product_name": "RabbitMQ",
+    "product_version": "3.13.4",
+    "users": [
+        {
+            "name": "techchallenge",
+            "password_hash": "hSjYdf2LG0Vto9ReIhSFoCSL3GyuPZJR3yX0Z9He4Hzg7ktW",
+            "hashing_algorithm": "rabbit_password_hashing_sha256",
+            "tags": [
+                "administrator"
+            ],
+            "limits": {}
+        }
+    ],
+    "vhosts": [
+        {
+            "name": "/",
+            "description": "Default virtual host",
+            "tags": [],
+            "metadata": {
+                "description": "Default virtual host",
+                "tags": []
+            }
+        }
+    ],
+    "permissions": [
+        {
+            "user": "techchallenge",
+            "vhost": "/",
+            "configure": ".*",
+            "write": ".*",
+            "read": ".*"
+        }
+    ],
+    "topic_permissions": [],
+    "parameters": [],
+    "global_parameters": [
+        {
+            "name": "internal_cluster_id",
+            "value": "rabbitmq-cluster-id-rjDOLMOw6NC26bVpFQrbig"
+        }
+    ],
+    "policies": [],
+    "queues": [
+        {
+            "name": "orders_payment_queue",
+            "vhost": "/",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        },
+        {
+            "name": "orders_ready_queue",
+            "vhost": "/",
+            "durable": true,
+            "auto_delete": false,
+            "arguments": {}
+        }
+    ],
+    "exchanges": [
+        {
+            "name": "order_events",
+            "vhost": "/",
+            "type": "topic",
+            "durable": true,
+            "auto_delete": false,
+            "internal": false,
+            "arguments": {}
+        }
+    ],
+    "bindings": [
+        {
+            "source": "order_events",
+            "vhost": "/",
+            "destination": "orders_payment_queue",
+            "destination_type": "queue",
+            "routing_key": "orders.payment",
+            "arguments": {}
+        },
+        {
+            "source": "order_events",
+            "vhost": "/",
+            "destination": "orders_ready_queue",
+            "destination_type": "queue",
+            "routing_key": "orders.ready",
+            "arguments": {}
+        }
+    ]
+}

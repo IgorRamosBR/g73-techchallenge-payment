@@ -71,3 +71,25 @@ func (p PaymentController) NotifyPaymentHandler(c *gin.Context) {
 
 	c.Status(http.StatusOK)
 }
+
+func (p PaymentController) ExpirePaymentHandler(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		handleBadRequestResponse(c, "[id] path parameter is required", errors.New("id is missing"))
+		return
+	}
+
+	orderId, err := strconv.Atoi(id)
+	if err != nil {
+		handleBadRequestResponse(c, "[id] path parameter is invalid", err)
+		return
+	}
+
+	err = p.paymentUsecase.ExpirePayment(orderId)
+	if err != nil {
+		handleInternalServerResponse(c, "failed to expire payment", err)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}

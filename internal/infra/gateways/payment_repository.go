@@ -5,7 +5,7 @@ import (
 
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/core/entities"
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/core/usecases/dto"
-	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/infra/drivers/dynamodb"
+	"github.com/IgorRamosBR/g73-techchallenge-payment/pkg/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"

@@ -14,8 +14,7 @@
                 "PORT": "8081",
                 "ENVIRONMENT": "local",
                 "CONFIG_DIR_PATH": "../configs",
-                "ORDER_API_URL": "http://localhost:8080/v1/orders",
-                "DEFAULT_TIMEOUT": "500ms",
+                "ORDER_EVENTS_BROKER_URL": "amqp://techchallenge:admin123@localhost:5672/",
                 "AWS_ACCESS_KEY_ID": "DUMMYIDEXAMPLE",
                 "AWS_SECRET_ACCESS_KEY": "DUMMYEXAMPLEKEY"
             }

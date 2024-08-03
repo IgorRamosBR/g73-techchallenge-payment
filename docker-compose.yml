@@ -1,6 +1,5 @@
-version: '3.8'
 services:
- dynamodb-local:
+  dynamodb-local:
    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
    image: "amazon/dynamodb-local:latest"
    container_name: dynamodb-local
@@ -9,7 +8,7 @@ services:
    volumes:
      - "./docker/dynamodb:/home/dynamodblocal/data"
    working_dir: /home/dynamodblocal
- app-node:
+  app-node:
    depends_on:
      - dynamodb-local
    image: amazon/aws-cli:2.15.45
@@ -21,3 +20,14 @@ services:
      AWS_SECRET_ACCESS_KEY: 'DUMMYEXAMPLEKEY'
    command:
      dynamodb create-table --table-name Payment --attribute-definitions AttributeName=OrderId,AttributeType=N --key-schema AttributeName=OrderId,KeyType=HASH --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 --table-class STANDARD --endpoint-url http://dynamodb-local:8000/ --region us-east-1
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=techchallenge
+      - RABBITMQ_DEFAULT_PASS=admin123
+    volumes:
+      - ./init/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./init/definitions.json:/etc/rabbitmq/definitions.json:ro

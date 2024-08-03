@@ -7,13 +7,15 @@ import (
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/api"
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/controllers"
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/core/usecases"
-	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/infra/drivers/dynamodb"
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/infra/drivers/http"
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/infra/drivers/payment"
+	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/infra/drivers/publisher"
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/infra/gateways"
+	"github.com/IgorRamosBR/g73-techchallenge-payment/pkg/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	awsDynamoDb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	amqp "github.com/rabbitmq/amqp091-go"
 
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
@@ -42,15 +44,20 @@ func main() {
 	}
 	paymentRepository := gateways.NewPaymentRepositoryGateway(dynamodbClient, appConfig.PaymentTable)
 
-	// order api
-	httpClient := http.NewHttpClient(appConfig.DefaultTimeout)
-	orderClient := gateways.NewOrderClient(httpClient, appConfig.OrderApiUrl)
+	// order notify
+	publisher, err := NewRabbitMQPublisher(appConfig.OrderEventsBrokerUrl, appConfig.OrderEventsTopic)
+	if err != nil {
+		panic(err)
+	}
+	defer publisher.Close()
+
+	orderNotify := gateways.NewOrderNotify(publisher, appConfig.OrderEventsPaymentDestination)
 
 	// payment usecase
 	paymentUseCaseConfig := usecases.PaymentUseCaseConfig{
 		PaymentBroker:     paymentBroker,
 		PaymentRepository: paymentRepository,
-		OrderClient:       orderClient,
+		OrderNotify:       orderNotify,
 	}
 	paymentUseCase := usecases.NewPaymentUseCase(paymentUseCaseConfig)
 
@@ -77,4 +84,20 @@ func NewDynamoDBClient(endpoint string) (dynamodb.DynamoDBClient, error) {
 	client := awsDynamoDb.NewFromConfig(cfg)
 	return dynamodb.NewDynamoDBClient(client), nil
 
+}
+
+func NewRabbitMQPublisher(url, exchange string) (publisher.Publisher, error) {
+	conn, err := amqp.Dial(url)
+	if err != nil {
+		return nil, err
+	}
+
+	ch, err := conn.Channel()
+	if err != nil {
+		return nil, err
+	}
+
+	publisher := publisher.NewRabbitMQPublisher(conn, ch, exchange)
+
+	return publisher, nil
 }
