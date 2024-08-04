@@ -3,6 +3,7 @@ package dynamodb
 import (
 	"context"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -10,7 +11,7 @@ import (
 
 type DynamoDBClient interface {
 	GetItem(tableName string, key map[string]types.AttributeValue) (map[string]types.AttributeValue, error)
-	QueryItem(tableName string, expr expression.Expression) ([]map[string]types.AttributeValue, error)
+	QueryItem(tableName string, expr expression.Expression, indexName string) ([]map[string]types.AttributeValue, error)
 	PutItem(tableName string, item map[string]types.AttributeValue) error
 	UpdateItem(tableName string, key map[string]types.AttributeValue, expr expression.Expression) error
 }
@@ -34,12 +35,13 @@ func (d *dynamoDBClient) GetItem(tableName string, key map[string]types.Attribut
 	return result.Item, nil
 }
 
-func (d *dynamoDBClient) QueryItem(tableName string, expr expression.Expression) ([]map[string]types.AttributeValue, error) {
+func (d *dynamoDBClient) QueryItem(tableName string, expr expression.Expression, indexName string) ([]map[string]types.AttributeValue, error) {
 	response, err := d.client.Query(context.TODO(), &dynamodb.QueryInput{
 		TableName:                 &tableName,
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		KeyConditionExpression:    expr.KeyCondition(),
+		IndexName:                 aws.String(indexName),
 	})
 	if err != nil {
 		return nil, err

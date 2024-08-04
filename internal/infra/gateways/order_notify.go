@@ -19,7 +19,7 @@ type orderNotify struct {
 }
 
 type OrderPaymentMessage struct {
-	OrderId int                    `json:"orderId"`
+	OrderId int                    `json:"id"`
 	Status  entities.PaymentStatus `json:"status"`
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	log "github.com/sirupsen/logrus"
 )
 
 type rabbitMQPublisher struct {
@@ -34,6 +35,7 @@ func (c *rabbitMQPublisher) Publish(ctx context.Context, destination string, mes
 }
 
 func (c *rabbitMQPublisher) Close() error {
+	log.Info("Closing RabbitMQ connection...")
 	if err := c.channel.Close(); err != nil {
 		return err
 	}

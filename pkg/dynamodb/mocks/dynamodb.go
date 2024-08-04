@@ -69,18 +69,18 @@ func (mr *MockDynamoDBClientMockRecorder) PutItem(tableName, item any) *gomock.C
 }
 
 // QueryItem mocks base method.
-func (m *MockDynamoDBClient) QueryItem(tableName string, expr expression.Expression) ([]map[string]types.AttributeValue, error) {
+func (m *MockDynamoDBClient) QueryItem(tableName string, expr expression.Expression, indexName string) ([]map[string]types.AttributeValue, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueryItem", tableName, expr)
+	ret := m.ctrl.Call(m, "QueryItem", tableName, expr, indexName)
 	ret0, _ := ret[0].([]map[string]types.AttributeValue)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // QueryItem indicates an expected call of QueryItem.
-func (mr *MockDynamoDBClientMockRecorder) QueryItem(tableName, expr any) *gomock.Call {
+func (mr *MockDynamoDBClientMockRecorder) QueryItem(tableName, expr, indexName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryItem", reflect.TypeOf((*MockDynamoDBClient)(nil).QueryItem), tableName, expr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryItem", reflect.TypeOf((*MockDynamoDBClient)(nil).QueryItem), tableName, expr, indexName)
 }
 
 // UpdateItem mocks base method.
