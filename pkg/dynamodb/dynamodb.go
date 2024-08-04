@@ -10,6 +10,7 @@ import (
 
 type DynamoDBClient interface {
 	GetItem(tableName string, key map[string]types.AttributeValue) (map[string]types.AttributeValue, error)
+	QueryItem(tableName string, expr expression.Expression) ([]map[string]types.AttributeValue, error)
 	PutItem(tableName string, item map[string]types.AttributeValue) error
 	UpdateItem(tableName string, key map[string]types.AttributeValue, expr expression.Expression) error
 }
@@ -22,17 +23,6 @@ func NewDynamoDBClient(client *dynamodb.Client) *dynamoDBClient {
 	return &dynamoDBClient{client: client}
 }
 
-func (d *dynamoDBClient) PutItem(tableName string, item map[string]types.AttributeValue) error {
-	_, err := d.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
-		TableName: &tableName,
-		Item:      item,
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (d *dynamoDBClient) GetItem(tableName string, key map[string]types.AttributeValue) (map[string]types.AttributeValue, error) {
 	result, err := d.client.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: &tableName,
@@ -42,6 +32,31 @@ func (d *dynamoDBClient) GetItem(tableName string, key map[string]types.Attribut
 		return nil, err
 	}
 	return result.Item, nil
+}
+
+func (d *dynamoDBClient) QueryItem(tableName string, expr expression.Expression) ([]map[string]types.AttributeValue, error) {
+	response, err := d.client.Query(context.TODO(), &dynamodb.QueryInput{
+		TableName:                 &tableName,
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		KeyConditionExpression:    expr.KeyCondition(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return response.Items, nil
+}
+
+func (d *dynamoDBClient) PutItem(tableName string, item map[string]types.AttributeValue) error {
+	_, err := d.client.PutItem(context.TODO(), &dynamodb.PutItemInput{
+		TableName: &tableName,
+		Item:      item,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *dynamoDBClient) UpdateItem(tableName string, key map[string]types.AttributeValue, expr expression.Expression) error {
