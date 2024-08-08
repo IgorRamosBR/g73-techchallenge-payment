@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/IgorRamosBR/g73-techchallenge-order/pkg/events"
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/core/entities"
 	"github.com/IgorRamosBR/g73-techchallenge-payment/internal/infra/drivers/publisher"
 )
@@ -18,19 +19,14 @@ type orderNotify struct {
 	destination string
 }
 
-type OrderPaymentMessage struct {
-	OrderId int                    `json:"id"`
-	Status  entities.PaymentStatus `json:"status"`
-}
-
 func NewOrderNotify(publisher publisher.Publisher, destination string) OrderNotify {
 	return orderNotify{publisher: publisher, destination: destination}
 }
 
 func (o orderNotify) NotifyPaymentOrder(orderId int, status entities.PaymentStatus) error {
-	message, err := json.Marshal(OrderPaymentMessage{
+	message, err := json.Marshal(events.OrderStatusEventDTO{
 		OrderId: orderId,
-		Status:  status,
+		Status:  string(status),
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal payment order[%d] with status[%s], error: %v", orderId, status, err)
