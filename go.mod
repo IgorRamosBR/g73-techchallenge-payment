@@ -36,6 +36,7 @@ require (
 )
 
 require (
+	github.com/IgorRamosBR/g73-techchallenge-order v0.1.1
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.13.14
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.7.14
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.32.0
