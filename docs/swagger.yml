@@ -120,3 +120,36 @@ paths:
       responses:
         '200':
           description: 'OK'
+  /payment/{id}/expire:
+   post:
+      tags:
+        - payment
+      summary: Pagamento Expirado
+      parameters: 
+        - name: id
+          in: path
+          description: ID do pedido
+          required: true
+          schema:
+            type: integer
+            format: int64
+            example: 4
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  example: "CREATED|PAID|RECEIVED|IN_PROGRESS|READY|DONE"
+                merchantOrder:
+                  type: integer
+                  example: 1
+                paymentId:
+                  type: integer
+                  example: 1
+      responses:
+        '200':
+          description: 'OK'
